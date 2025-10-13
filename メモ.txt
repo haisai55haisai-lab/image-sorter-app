@@ -1,0 +1,6 @@
+作業内容	保存場所	備考
+大量の画像ファイルが保存されたフォルダにアクセス	/Users/johnstakickm1pro/Library/CloudStorage/GoogleDrive-ozhnsales01@gmail.com/マイドライブ/テスト環境/1_出品元画像	
+"画像とファイル名を上下に並べてサムネイル一覧を表示。
+チェックボックスも各画像につける"		
+手動でチェックボックスにチェックをつけたものは出品フォルダに移動	/Users/johnstakickm1pro/Library/CloudStorage/GoogleDrive-ozhnsales01@gmail.com/マイドライブ/テスト環境/2_仕分け後元画像	移動する時には出品フォルダ内に日付フォルダを作成しその中に移動（すでにあれば作成不要）
+チェックをつけなかったものは予備保管ファイルに移動	/Users/johnstakickm1pro/Library/CloudStorage/GoogleDrive-ozhnsales01@gmail.com/マイドライブ/テスト環境/4_予備保管ファイル	
