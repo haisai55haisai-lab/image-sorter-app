@@ -43,8 +43,27 @@ def get_images():
 @app.route('/')
 def index():
     """メインページ"""
-    images = get_images()
-    return render_template('index.html', images=images)
+    filter_char = request.args.get('filter', 'all')
+
+    all_images = get_images()
+
+    # 頭文字でフィルタリング
+    if filter_char != 'all':
+        images = [img for img in all_images if img[0].upper() == filter_char.upper()]
+    else:
+        images = all_images
+
+    # 利用可能な頭文字を取得
+    available_chars = sorted(set(img[0].upper() for img in all_images))
+    char_counts = {char: sum(1 for img in all_images if img[0].upper() == char) for char in available_chars}
+
+    return render_template('index.html',
+                         images=images,
+                         all_images_count=len(all_images),
+                         filtered_count=len(images),
+                         filter_char=filter_char,
+                         available_chars=available_chars,
+                         char_counts=char_counts)
 
 @app.route('/api/images')
 def api_images():
@@ -56,6 +75,12 @@ def api_images():
 def serve_image(filename):
     """画像ファイルを配信"""
     return send_from_directory(SOURCE_DIR, filename)
+
+@app.route('/api/all_images', methods=['GET'])
+def all_images():
+    """全画像リストを取得"""
+    images = get_images()
+    return jsonify(images)
 
 @app.route('/api/move', methods=['POST'])
 def move_images():
@@ -113,6 +138,34 @@ def move_images():
             results['errors'].append(f"{filename}: {str(e)}")
 
     return jsonify(results)
+
+@app.route('/api/move_from_backup', methods=['POST'])
+def move_from_backup():
+    """予備保管フォルダから元画像フォルダへ全ファイルを移動"""
+    if not os.path.exists(UNSELECTED_DIR):
+        return jsonify({'error': '予備保管フォルダが見つかりません', 'moved': []})
+
+    image_extensions = {'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp'}
+    moved_files = []
+    errors = []
+
+    for filename in os.listdir(UNSELECTED_DIR):
+        ext = os.path.splitext(filename)[1].lower()
+        if ext in image_extensions:
+            src = os.path.join(UNSELECTED_DIR, filename)
+            dst = os.path.join(SOURCE_DIR, filename)
+
+            try:
+                shutil.move(src, dst)
+                moved_files.append(filename)
+            except Exception as e:
+                errors.append(f"{filename}: {str(e)}")
+
+    return jsonify({
+        'moved': moved_files,
+        'count': len(moved_files),
+        'errors': errors
+    })
 
 @app.route('/api/shutdown', methods=['POST'])
 def shutdown():
