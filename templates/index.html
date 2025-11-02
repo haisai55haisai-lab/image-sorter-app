@@ -672,8 +672,40 @@
             }
         }
 
+        // localStorageをクリーンアップ（存在しない画像の選択状態を削除）
+        async function cleanupSelections() {
+            const saved = localStorage.getItem('imageSelections');
+            if (!saved) return;
+
+            try {
+                // 全画像リストを取得
+                const response = await fetch('/api/all_images');
+                const allImages = await response.json();
+                const allImagesSet = new Set(allImages);
+
+                // 選択状態を読み込み
+                const selections = JSON.parse(saved);
+                const cleanedSelections = {};
+
+                // 存在する画像のみ保持
+                Object.keys(selections).forEach(filename => {
+                    if (allImagesSet.has(filename)) {
+                        cleanedSelections[filename] = selections[filename];
+                    }
+                });
+
+                // クリーンアップした選択状態を保存
+                localStorage.setItem('imageSelections', JSON.stringify(cleanedSelections));
+            } catch (error) {
+                console.error('Failed to cleanup selections:', error);
+            }
+        }
+
         // 初期化
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            // localStorageをクリーンアップ
+            await cleanupSelections();
+
             // 選択状態を復元
             restoreSelections();
 
