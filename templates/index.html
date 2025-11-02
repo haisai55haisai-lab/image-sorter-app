@@ -353,8 +353,11 @@
                 <div class="image-wrapper">
                     <img src="/images/{{ image }}"
                          alt="{{ image }}"
+                         loading="lazy"
                          decoding="async"
-                         onerror="this.style.border='2px solid red'; this.alt='読込エラー';"
+                         onerror="handleImageError(this)"
+                         onload="this.style.opacity='1'"
+                         style="opacity:0; transition: opacity 0.3s;"
                          onclick="openModal('/images/{{ image }}', '{{ image }}')">
                 </div>
                 <div class="filename">{{ image }}</div>
@@ -643,6 +646,32 @@
             }
         }
 
+        // 画像読み込みエラー処理（リトライ機能付き）
+        function handleImageError(img) {
+            if (!img.dataset.retryCount) {
+                img.dataset.retryCount = 0;
+            }
+
+            const retryCount = parseInt(img.dataset.retryCount);
+
+            if (retryCount < 3) {
+                // 3回までリトライ
+                img.dataset.retryCount = retryCount + 1;
+                setTimeout(() => {
+                    const originalSrc = img.src;
+                    img.src = '';
+                    img.src = originalSrc + '?retry=' + Date.now();
+                }, 1000 * retryCount); // 遅延を増やす
+            } else {
+                // 3回失敗したらエラー表示
+                img.style.opacity = '1';
+                img.style.border = '2px solid red';
+                img.alt = '読込エラー';
+                img.parentElement.style.background = '#ffebee';
+                console.error('Failed to load image after 3 retries:', img.src);
+            }
+        }
+
         // 初期化
         document.addEventListener('DOMContentLoaded', () => {
             // 選択状態を復元
@@ -650,15 +679,6 @@
 
             // カウンター更新
             updateCounter();
-
-            // 画像の読み込みエラーハンドリング
-            document.querySelectorAll('.image-wrapper img').forEach(img => {
-                img.addEventListener('error', function() {
-                    console.error('Failed to load image:', this.src);
-                    this.style.border = '2px solid red';
-                    this.parentElement.style.background = '#ffebee';
-                });
-            });
         });
     </script>
 </body>
